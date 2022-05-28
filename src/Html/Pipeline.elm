@@ -1,5 +1,6 @@
 module Html.Pipeline exposing
-    ( Element, text, map
+    ( Element, element, text, children, child, htmlChildren, map, collect, toHtml
+    , style
     , h1, h2, h3, h4, h5, h6
     , div, p, hr, pre, blockquote
     , span, a, code, em, strong, i, b, u, sub, sup, br
@@ -16,19 +17,22 @@ module Html.Pipeline exposing
     , small, cite, dfn, abbr, time, var, samp, kbd, s, q
     , mark, ruby, rt, rp, bdi, bdo, wbr
     , details, summary, menuitem, menu
-    , element
     )
 
-{-| This file is organized roughly in order of popularity. The tags which you'd
-expect to use frequently will be closer to the top.
+{-|
 
 
 # Primitives
 
-@docs Element, text, node, map
+@docs Element, element, text, children, child, htmlChildren, map, collect, toHtml
 
 
 # Tags
+
+
+## Stylesheets
+
+@docs style
 
 
 ## Headers
@@ -124,7 +128,9 @@ import Html.Shared as Shared
 -- CORE TYPES
 
 
-{-| -}
+{-| A pipeline `Element` is a [HTML element node]
+that can be modified with pipeline functions.
+-}
 type alias Element msg =
     Shared.Element msg
 
@@ -137,27 +143,80 @@ type alias Modifier msg =
 -- PRIMITIVES
 
 
-{-| -}
+{-| General way to create `Element` values.
+It is used to define all of the helper functions in this library.
+
+    button : Element msg
+    button =
+        element "button"
+
+-}
 element : String -> Element msg
 element tagName =
-    Shared.Element tagName []
+    Shared.element tagName
 
 
 
 -- BASIC MODIFIERS
 
 
-{-| -}
+{-| Appends a text node to an element.
+
+    Element.div
+        |> Element.text "Hello, world"
+
+    -- <div>Hello, world</div>
+
+-}
 text : String -> Element msg -> Element msg
 text content =
-    Shared.addModifier (Shared.AddTextNode content)
+    Shared.addTextNode content
 
 
+{-| Appends a list of elements to an element.
 
--- NESTING VIEWS
+    Element.div
+        |> Element.children
+            [ Element.input
+            , Element.button
+                |> Element.text "Submit"
+            ]
+
+    -- <div><input /><button>Submit</button></div>
+
+You can keep calling this function to add more children.
+
+-}
+children : List (Element msg) -> Element msg -> Element msg
+children =
+    Shared.addChildren
 
 
-{-| Transform the messages produced by some `Html`. In the following example,
+{-| Like [children](#children) but appends only one child element.
+
+The example above can be written like:
+
+    Element.div
+        |> Element.child Element.input
+        |> Element.child
+            (Element.button
+                |> Element.text "Submit"
+            )
+
+-}
+child : Element msg -> Element msg -> Element msg
+child el =
+    children [ el ]
+
+
+{-| Appends `Html` values as children of an element.
+-}
+htmlChildren : List (Html.Html msg) -> Element msg -> Element msg
+htmlChildren =
+    Shared.addHtmlChildren
+
+
+{-| Transform the messages produced by some `Element`. In the following example,
 we have `viewButton` that produces `()` messages, and we transform those values
 into `Msg` values in `view`.
 
@@ -165,27 +224,19 @@ into `Msg` values in `view`.
         = Left
         | Right
 
-    view : model -> Html Msg
+    view : model -> Element Msg
     view model =
-        div []
-            [ map (\_ -> Left) (viewButton "Left")
-            , map (\_ -> Right) (viewButton "Right")
-            ]
+        Element.div
+            |> Element.children
+                [ Element.map (\_ -> Left) (viewButton "Left")
+                , Element.map (\_ -> Right) (viewButton "Right")
+                ]
 
-    viewButton : String -> Html ()
+    viewButton : String -> Element ()
     viewButton name =
-        button [ onClick () ] [ text name ]
-
-If you are growing your project as recommended in [the official
-guide](https://guide.elm-lang.org/), this should not come in handy in most
-projects. Usually it is easier to just pass things in as arguments.
-
-**Note:** Some folks have tried to use this to make “components” in their
-projects, but they run into the fact that components are objects. Both are
-local mutable state with methods. Elm is not an object-oriented language, so
-you run into all sorts of friction if you try to use it like one. I definitely
-recommend against going down that path! Instead, make the simplest function
-possible and repeat.
+        Element.button
+            |> Event.onClick ()
+            |> Element.text name
 
 -}
 map : (a -> msg) -> Element a -> Element msg
@@ -193,8 +244,48 @@ map =
     Shared.map
 
 
+{-| Sometimes you **do** want to store attributes in a list.
+
+This helper function will let you apply multiple operations
+on an element:
+
+    buttonStyles label =
+        [ Attribute.style "background" "black"
+        , Attribute.style "color" "white"
+        , Attribute.style "padding" "10px"
+        , Element.text label
+        ]
+
+    button msg label =
+        Element.button
+            |> Element.collect (buttonStyles label)
+
+-}
+collect : List (Element msg -> Element msg) -> Element msg -> Element msg
+collect transformations el =
+    List.foldl (<|) el transformations
+
+
+
+-- TO HTML
+
+
+{-| Converts an [Element](#Element) into an `Html`.
+-}
+toHtml : Element msg -> Html.Html msg
+toHtml =
+    Shared.toHtml
+
+
 
 -- SECTIONS
+
+
+{-| Creates a CSS style node.
+-}
+style : Element msg
+style =
+    element "style"
 
 
 {-| Defines a section in a document.

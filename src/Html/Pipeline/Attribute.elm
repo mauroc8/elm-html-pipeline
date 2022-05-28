@@ -1,5 +1,6 @@
-module Html.Pipeline.Attributes exposing
-    ( style, property, attribute
+module Html.Pipeline.Attribute exposing
+    ( htmlAttribute
+    , style, property, attribute
     , class, classList, id, title, hidden
     , type_, value, checked, placeholder, selected
     , accept, acceptCharset, action, autocomplete, autofocus
@@ -7,7 +8,7 @@ module Html.Pipeline.Attributes exposing
     , name, novalidate, pattern, readonly, required, size, for, form
     , max, min, step
     , cols, rows, wrap
-    , href, target, download, hreflang, media, ping, rel
+    , href, target, download, downloadAs, hreflang, media, ping, rel
     , ismap, usemap, shape, coords
     , src, height, width, alt
     , autoplay, controls, loop, preload, poster, default, kind, srclang
@@ -17,7 +18,6 @@ module Html.Pipeline.Attributes exposing
     , accesskey, contenteditable, contextmenu, dir, draggable, dropzone
     , itemprop, lang, spellcheck, tabindex
     , cite, datetime, pubdate, manifest
-    , downloadAs
     )
 
 {-| Helper functions for HTML attributes. They are organized roughly by
@@ -25,9 +25,14 @@ category. Each attribute is labeled with the HTML tags it can be used with, so
 just search the page for `video` if you want video stuff.
 
 
+# Html
+
+@docs htmlAttribute
+
+
 # Primitives
 
-@docs style, property, attribute, map
+@docs style, property, attribute
 
 
 # Super Common Attributes
@@ -59,7 +64,7 @@ just search the page for `video` if you want video stuff.
 
 # Links and Areas
 
-@docs href, target, download, hreflang, media, ping, rel
+@docs href, target, download, downloadAs, hreflang, media, ping, rel
 
 
 ## Maps
@@ -108,45 +113,35 @@ Attributes that can be attached to any HTML tag but are less commonly used.
 
 import Html
 import Html.Attributes
-import Html.Shared as Shared
+import Html.Shared as Shared exposing (Element)
 import Json.Encode as Json exposing (Value)
 
 
-{-| -}
-type alias Element msg =
-    Shared.Element msg
+{-| Applies an `Html.Attribute` to an [Element](Html.Pipeline#Element).
 
+This is the base function used to implement all other functions in this module.
 
-type alias Modifier msg =
-    Shared.Modifier msg
-
-
-addAttr : Html.Attribute msg -> Element msg -> Element msg
-addAttr attr elem =
-    Shared.addModifier (Shared.AddAttribute attr) elem
+-}
+htmlAttribute : Html.Attribute msg -> Element msg -> Element msg
+htmlAttribute =
+    Shared.addAttribute
 
 
 {-| Specify a style.
 
-    greeting : Node msg
+    greeting : Element msg
     greeting =
-        div
-            [ style "background-color" "red"
-            , style "height" "90px"
-            , style "width" "100%"
-            ]
-            [ text "Hello!"
-            ]
-
-There is no `Html.Styles` module because best practices for working with HTML
-suggest that this should primarily be specified in CSS files. So the general
-recommendation is to use this function lightly.
+        Element.div
+            |> Element.style "background-color" "red"
+            |> Element.style "height" "90px"
+            |> Element.style "width" "100%"
+            |> Element.text "Hello!"
 
 -}
 style : String -> String -> Element msg -> Element msg
 style p v =
     Html.Attributes.style p v
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| This function makes it easier to build a space-separated class attribute.
@@ -155,14 +150,13 @@ is paired with. For example, maybe we want a way to view notices:
 
     viewNotice : Notice -> Html msg
     viewNotice notice =
-        div
-            [ classList
+        Element.div
+            |> Element.classList
                 [ ( "notice", True )
                 , ( "notice-important", notice.isImportant )
                 , ( "notice-seen", notice.isSeen )
                 ]
-            ]
-            [ text notice.content ]
+            |> Element.text notice.content
 
 **Note:** You can have as many `class` and `classList` attributes as you want.
 They all get applied, so if you say `[ class "notice", class "notice-seen" ]`
@@ -172,7 +166,7 @@ you will get both classes!
 classList : List ( String, Bool ) -> Element msg -> Element msg
 classList classes =
     Html.Attributes.classList classes
-        |> addAttr
+        |> Shared.addAttribute
 
 
 
@@ -184,7 +178,7 @@ JavaScript.
 
     import Json.Encode as Encode
 
-    class : String -> Attribute msg
+    class : String -> Element msg -> Element msg
     class name =
         property "className" (Encode.string name)
 
@@ -196,13 +190,13 @@ Read more about the difference between properties and attributes [here].
 property : String -> Value -> Element msg -> Element msg
 property n v =
     Html.Attributes.property n v
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Create _attributes_, like saying `domNode.setAttribute('class', 'greeting')`
 in JavaScript.
 
-    class : String -> Attribute msg
+    class : String -> Element msg -> Element msg
     class name =
         attribute "class" name
 
@@ -214,7 +208,7 @@ Read more about the difference between properties and attributes [here].
 attribute : String -> String -> Element msg -> Element msg
 attribute n v =
     Html.Attributes.attribute n v
-        |> addAttr
+        |> Shared.addAttribute
 
 
 
@@ -231,7 +225,7 @@ you will get both classes!
 class : String -> Element msg -> Element msg
 class n =
     Html.Attributes.class n
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Indicates the relevance of an element.
@@ -239,7 +233,7 @@ class n =
 hidden : Bool -> Element msg -> Element msg
 hidden bool =
     Html.Attributes.hidden bool
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Often used with CSS to style a specific element. The value of this
@@ -248,7 +242,7 @@ attribute must be unique.
 id : String -> Element msg -> Element msg
 id str =
     Html.Attributes.id str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Text to be displayed in a tooltip when hovering over the element.
@@ -256,7 +250,7 @@ id str =
 title : String -> Element msg -> Element msg
 title str =
     Html.Attributes.title str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 
@@ -268,7 +262,7 @@ title str =
 accesskey : Char -> Element msg -> Element msg
 accesskey char =
     Html.Attributes.accesskey char
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Indicates whether the element's content is editable.
@@ -276,7 +270,7 @@ accesskey char =
 contenteditable : Bool -> Element msg -> Element msg
 contenteditable bool =
     Html.Attributes.contenteditable bool
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Defines the ID of a `menu` element which will serve as the element's
@@ -285,7 +279,7 @@ context menu.
 contextmenu : String -> Element msg -> Element msg
 contextmenu str =
     Html.Attributes.contextmenu str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Defines the text direction. Allowed values are ltr (Left-To-Right) or rtl
@@ -294,7 +288,7 @@ contextmenu str =
 dir : String -> Element msg -> Element msg
 dir str =
     Html.Attributes.dir str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Defines whether the element can be dragged.
@@ -302,7 +296,7 @@ dir str =
 draggable : String -> Element msg -> Element msg
 draggable str =
     Html.Attributes.draggable str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Indicates that the element accept the dropping of content on it.
@@ -310,14 +304,14 @@ draggable str =
 dropzone : String -> Element msg -> Element msg
 dropzone str =
     Html.Attributes.dropzone str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| -}
 itemprop : String -> Element msg -> Element msg
 itemprop str =
     Html.Attributes.itemprop str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Defines the language used in the element.
@@ -325,7 +319,7 @@ itemprop str =
 lang : String -> Element msg -> Element msg
 lang str =
     Html.Attributes.lang str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Indicates whether spell checking is allowed for the element.
@@ -333,7 +327,7 @@ lang str =
 spellcheck : Bool -> Element msg -> Element msg
 spellcheck bool =
     Html.Attributes.spellcheck bool
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Overrides the browser's default tab order and follows the one specified
@@ -342,7 +336,7 @@ instead.
 tabindex : Int -> Element msg -> Element msg
 tabindex int =
     Html.Attributes.tabindex int
-        |> addAttr
+        |> Shared.addAttribute
 
 
 
@@ -355,7 +349,7 @@ tabindex int =
 src : String -> Element msg -> Element msg
 src str =
     Html.Attributes.src str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Declare the height of a `canvas`, `embed`, `iframe`, `img`, `input`,
@@ -364,7 +358,7 @@ src str =
 height : Int -> Element msg -> Element msg
 height int =
     Html.Attributes.height int
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Declare the width of a `canvas`, `embed`, `iframe`, `img`, `input`,
@@ -373,7 +367,7 @@ height int =
 width : Int -> Element msg -> Element msg
 width n =
     Html.Attributes.width n
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Alternative text in case an image can't be displayed. Works with `img`,
@@ -382,7 +376,7 @@ width n =
 alt : String -> Element msg -> Element msg
 alt str =
     Html.Attributes.alt str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 
@@ -394,7 +388,7 @@ alt str =
 autoplay : Bool -> Element msg -> Element msg
 autoplay bool =
     Html.Attributes.autoplay bool
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Indicates whether the browser should show playback controls for the `audio`
@@ -403,7 +397,7 @@ or `video`.
 controls : Bool -> Element msg -> Element msg
 controls bool =
     Html.Attributes.controls bool
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Indicates whether the `audio` or `video` should start playing from the
@@ -412,7 +406,7 @@ start when it's finished.
 loop : Bool -> Element msg -> Element msg
 loop bool =
     Html.Attributes.loop bool
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Control how much of an `audio` or `video` resource should be preloaded.
@@ -420,7 +414,7 @@ loop bool =
 preload : String -> Element msg -> Element msg
 preload str =
     Html.Attributes.preload str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| A URL indicating a poster frame to show until the user plays or seeks the
@@ -429,7 +423,7 @@ preload str =
 poster : String -> Element msg -> Element msg
 poster str =
     Html.Attributes.poster str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Indicates that the `track` should be enabled unless the user's preferences
@@ -438,7 +432,7 @@ indicate something different.
 default : Bool -> Element msg -> Element msg
 default bool =
     Html.Attributes.default bool
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Specifies the kind of text `track`.
@@ -446,7 +440,7 @@ default bool =
 kind : String -> Element msg -> Element msg
 kind str =
     Html.Attributes.kind str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Specifies a user-readable title of the text `track`.
@@ -454,7 +448,7 @@ kind str =
 label : String -> Element msg -> Element msg
 label str =
     Html.Attributes.attribute "label" str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| A two letter language code indicating the language of the `track` text data.
@@ -462,7 +456,7 @@ label str =
 srclang : String -> Element msg -> Element msg
 srclang str =
     Html.Attributes.srclang str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 
@@ -475,7 +469,7 @@ srclang str =
 sandbox : String -> Element msg -> Element msg
 sandbox str =
     Html.Attributes.sandbox str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| An HTML document that will be displayed as the body of an `iframe`. It will
@@ -484,7 +478,7 @@ override the content of the `src` attribute if it has been specified.
 srcdoc : String -> Element msg -> Element msg
 srcdoc str =
     Html.Attributes.srcdoc str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 
@@ -497,7 +491,7 @@ srcdoc str =
 type_ : String -> Element msg -> Element msg
 type_ str =
     Html.Attributes.type_ str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Defines a default value which will be displayed in a `button`, `option`,
@@ -506,7 +500,7 @@ type_ str =
 value : String -> Element msg -> Element msg
 value str =
     Html.Attributes.value str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Indicates whether an `input` of type checkbox is checked.
@@ -514,7 +508,7 @@ value str =
 checked : Bool -> Element msg -> Element msg
 checked bool =
     Html.Attributes.checked bool
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Provides a hint to the user of what can be entered into an `input` or
@@ -523,7 +517,7 @@ checked bool =
 placeholder : String -> Element msg -> Element msg
 placeholder str =
     Html.Attributes.placeholder str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Defines which `option` will be selected on page load.
@@ -531,7 +525,7 @@ placeholder str =
 selected : Bool -> Element msg -> Element msg
 selected bool =
     Html.Attributes.selected bool
-        |> addAttr
+        |> Shared.addAttribute
 
 
 
@@ -544,7 +538,7 @@ For `form` and `input`.
 accept : String -> Element msg -> Element msg
 accept str =
     Html.Attributes.accept str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| List of supported charsets in a `form`.
@@ -552,7 +546,7 @@ accept str =
 acceptCharset : String -> Element msg -> Element msg
 acceptCharset str =
     Html.Attributes.acceptCharset str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| The URI of a program that processes the information submitted via a `form`.
@@ -560,7 +554,7 @@ acceptCharset str =
 action : String -> Element msg -> Element msg
 action str =
     Html.Attributes.action str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Indicates whether a `form` or an `input` can have their values automatically
@@ -569,7 +563,7 @@ completed by the browser.
 autocomplete : Bool -> Element msg -> Element msg
 autocomplete bool =
     Html.Attributes.autocomplete bool
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| The element should be automatically focused after the page loaded.
@@ -578,7 +572,7 @@ For `button`, `input`, `select`, and `textarea`.
 autofocus : Bool -> Element msg -> Element msg
 autofocus bool =
     Html.Attributes.autofocus bool
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Indicates whether the user can interact with a `button`, `fieldset`,
@@ -587,7 +581,7 @@ autofocus bool =
 disabled : Bool -> Element msg -> Element msg
 disabled bool =
     Html.Attributes.disabled bool
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| How `form` data should be encoded when submitted with the POST method.
@@ -597,7 +591,7 @@ text/plain.
 enctype : String -> Element msg -> Element msg
 enctype str =
     Html.Attributes.enctype str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Associates an `input` with a `datalist` tag. The datalist gives some
@@ -608,7 +602,7 @@ For `input`.
 list : String -> Element msg -> Element msg
 list str =
     Html.Attributes.list str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Defines the minimum number of characters allowed in an `input` or
@@ -617,7 +611,7 @@ list str =
 minlength : Int -> Element msg -> Element msg
 minlength n =
     Html.Attributes.minlength n
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Defines the maximum number of characters allowed in an `input` or
@@ -626,7 +620,7 @@ minlength n =
 maxlength : Int -> Element msg -> Element msg
 maxlength n =
     Html.Attributes.maxlength n
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Defines which HTTP method to use when submitting a `form`. Can be GET
@@ -635,7 +629,7 @@ maxlength n =
 method : String -> Element msg -> Element msg
 method n =
     Html.Attributes.method n
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Indicates whether multiple values can be entered in an `input` of type
@@ -644,7 +638,7 @@ email or file. Can also indicate that you can `select` many options.
 multiple : Bool -> Element msg -> Element msg
 multiple bool =
     Html.Attributes.multiple bool
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Name of the element. For example used by the server to identify the fields
@@ -654,7 +648,7 @@ in form submits. For `button`, `form`, `fieldset`, `iframe`, `input`,
 name : String -> Element msg -> Element msg
 name str =
     Html.Attributes.name str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| This attribute indicates that a `form` shouldn't be validated when
@@ -663,7 +657,7 @@ submitted.
 novalidate : Bool -> Element msg -> Element msg
 novalidate bool =
     Html.Attributes.novalidate bool
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Defines a regular expression which an `input`'s value will be validated
@@ -672,7 +666,7 @@ against.
 pattern : String -> Element msg -> Element msg
 pattern str =
     Html.Attributes.pattern str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Indicates whether an `input` or `textarea` can be edited.
@@ -680,7 +674,7 @@ pattern str =
 readonly : Bool -> Element msg -> Element msg
 readonly bool =
     Html.Attributes.readonly bool
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Indicates whether this element is required to fill out or not.
@@ -689,7 +683,7 @@ For `input`, `select`, and `textarea`.
 required : Bool -> Element msg -> Element msg
 required bool =
     Html.Attributes.required bool
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| For `input` specifies the width of an input in characters.
@@ -700,7 +694,7 @@ For `select` specifies the number of visible options in a drop-down list.
 size : Int -> Element msg -> Element msg
 size n =
     Html.Attributes.size n
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| The element ID described by this `label` or the element IDs that are used
@@ -709,7 +703,7 @@ for an `output`.
 for : String -> Element msg -> Element msg
 for str =
     Html.Attributes.for str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Indicates the element ID of the `form` that owns this particular `button`,
@@ -719,7 +713,7 @@ for str =
 form : String -> Element msg -> Element msg
 form str =
     Html.Attributes.form str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 
@@ -732,7 +726,7 @@ date, the max value must be a number or date. For `input`, `meter`, and `progres
 max : String -> Element msg -> Element msg
 max str =
     Html.Attributes.max str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Indicates the minimum value allowed. When using an input of type number or
@@ -741,7 +735,7 @@ date, the min value must be a number or date. For `input` and `meter`.
 min : String -> Element msg -> Element msg
 min str =
     Html.Attributes.min str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Add a step size to an `input`. Use `step "any"` to allow any floating-point
@@ -750,7 +744,7 @@ number to be used in the input.
 step : String -> Element msg -> Element msg
 step n =
     Html.Attributes.step n
-        |> addAttr
+        |> Shared.addAttribute
 
 
 
@@ -762,7 +756,7 @@ step n =
 cols : Int -> Element msg -> Element msg
 cols n =
     Html.Attributes.cols n
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Defines the number of rows in a `textarea`.
@@ -770,7 +764,7 @@ cols n =
 rows : Int -> Element msg -> Element msg
 rows n =
     Html.Attributes.rows n
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Indicates whether the text should be wrapped in a `textarea`. Possible
@@ -779,7 +773,7 @@ values are "hard" and "soft".
 wrap : String -> Element msg -> Element msg
 wrap str =
     Html.Attributes.wrap str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 
@@ -793,7 +787,7 @@ a query string.
 ismap : Bool -> Element msg -> Element msg
 ismap bool =
     Html.Attributes.ismap bool
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Specify the hash name reference of a `map` that should be used for an `img`
@@ -803,7 +797,7 @@ E.g. `"#planet-map"`.
 usemap : String -> Element msg -> Element msg
 usemap str =
     Html.Attributes.usemap str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Declare the shape of the clickable area in an `a` or `area`. Valid values
@@ -813,7 +807,7 @@ include: default, rect, circle, poly. This attribute can be paired with
 shape : String -> Element msg -> Element msg
 shape str =
     Html.Attributes.shape str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| A set of values specifying the coordinates of the hot-spot region in an
@@ -822,7 +816,7 @@ shape str =
 coords : String -> Element msg -> Element msg
 coords str =
     Html.Attributes.coords str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 
@@ -836,7 +830,7 @@ coords str =
 align : String -> Element msg -> Element msg
 align str =
     Html.Attributes.align str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Contains a URI which points to the source of the quote or change in a
@@ -845,7 +839,7 @@ align str =
 cite : String -> Element msg -> Element msg
 cite str =
     Html.Attributes.cite str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 
@@ -857,7 +851,7 @@ cite str =
 href : String -> Element msg -> Element msg
 href url =
     Html.Attributes.href url
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Specify where the results of clicking an `a`, `area`, `base`, or `form`
@@ -874,7 +868,7 @@ You can also give the name of any `frame` you have created.
 target : String -> Element msg -> Element msg
 target str =
     Html.Attributes.target str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Indicates that clicking an `a` and `area` will download the resource
@@ -893,7 +887,7 @@ The empty `String` says to just name it whatever it was called on the server.
 download : String -> Element msg -> Element msg
 download fileName =
     Html.Attributes.download fileName
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Indicates that clicking an `a` and `area` will download the resource
@@ -903,7 +897,7 @@ So `downloadAs "hats.json"` means the person gets a file named `hats.json`.
 downloadAs : String -> Element msg -> Element msg
 downloadAs str =
     Html.Attributes.attribute "downloadAs" str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Two-letter language code of the linked resource of an `a`, `area`, or `link`.
@@ -911,7 +905,7 @@ downloadAs str =
 hreflang : String -> Element msg -> Element msg
 hreflang str =
     Html.Attributes.hreflang str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Specifies a hint of the target media of a `a`, `area`, `link`, `source`,
@@ -920,7 +914,7 @@ or `style`.
 media : String -> Element msg -> Element msg
 media str =
     Html.Attributes.media str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Specify a URL to send a short POST request to when the user clicks on an
@@ -929,7 +923,7 @@ media str =
 ping : String -> Element msg -> Element msg
 ping str =
     Html.Attributes.ping str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Specifies the relationship of the target object to the link object.
@@ -938,7 +932,7 @@ For `a`, `area`, `link`.
 rel : String -> Element msg -> Element msg
 rel str =
     Html.Attributes.rel str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 
@@ -951,7 +945,7 @@ For `del`, `ins`, `time`.
 datetime : String -> Element msg -> Element msg
 datetime str =
     Html.Attributes.datetime str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Indicates whether this date and time is the date of the nearest `article`
@@ -960,7 +954,7 @@ ancestor element. For `time`.
 pubdate : String -> Element msg -> Element msg
 pubdate str =
     Html.Attributes.pubdate str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 
@@ -973,7 +967,7 @@ order instead of a ascending.
 reversed : Bool -> Element msg -> Element msg
 reversed bool =
     Html.Attributes.reversed bool
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Defines the first number of an ordered list if you want it to be something
@@ -982,7 +976,7 @@ besides 1.
 start : Int -> Element msg -> Element msg
 start n =
     Html.Attributes.start n
-        |> addAttr
+        |> Shared.addAttribute
 
 
 
@@ -995,7 +989,7 @@ For `td` and `th`.
 colspan : Int -> Element msg -> Element msg
 colspan n =
     Html.Attributes.colspan n
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| A space separated list of element IDs indicating which `th` elements are
@@ -1004,7 +998,7 @@ headers for this cell. For `td` and `th`.
 headers : String -> Element msg -> Element msg
 headers str =
     Html.Attributes.headers str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Defines the number of rows a table cell should span over.
@@ -1013,7 +1007,7 @@ For `td` and `th`.
 rowspan : Int -> Element msg -> Element msg
 rowspan n =
     Html.Attributes.rowspan n
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Specifies the scope of a header cell `th`. Possible values are: col, row,
@@ -1022,7 +1016,7 @@ colgroup, rowgroup.
 scope : String -> Element msg -> Element msg
 scope str =
     Html.Attributes.scope str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| Specifies the URL of the cache manifest for an `html` tag.
@@ -1030,7 +1024,7 @@ scope str =
 manifest : String -> Element msg -> Element msg
 manifest str =
     Html.Attributes.manifest str
-        |> addAttr
+        |> Shared.addAttribute
 
 
 {-| The number of columns a `col` or `colgroup` should span.
@@ -1038,4 +1032,4 @@ manifest str =
 span : Int -> Element msg -> Element msg
 span n =
     Html.Attributes.attribute "span" (String.fromInt n)
-        |> addAttr
+        |> Shared.addAttribute
