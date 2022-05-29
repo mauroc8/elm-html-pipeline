@@ -6,12 +6,11 @@ operator.
 ## Example
 
 ```elm
-import Html exposing (Html)
 import Html.Element as Element exposing (Element)
 import Html.Element.Attribute as Attribute
 import Html.Element.Event as Event
 
-view : Int -> Html Msg
+view : Int -> Element Msg
 view count =
     Element.div
         |> Attribute.style "font-family" "sans-serif"
