@@ -1,5 +1,5 @@
-module Html.Pipeline.Attribute exposing
-    ( htmlAttribute
+module Html.Element.Attribute exposing
+    ( htmlAttribute, htmlAttributes, batch, none
     , style, property, attribute
     , class, classList, id, title, hidden
     , type_, value, checked, placeholder, selected
@@ -20,14 +20,9 @@ module Html.Pipeline.Attribute exposing
     , cite, datetime, pubdate, manifest
     )
 
-{-| Helper functions for HTML attributes. They are organized roughly by
-category. Each attribute is labeled with the HTML tags it can be used with, so
-just search the page for `video` if you want video stuff.
+{-| Functions to add attributes to an element.
 
-
-# Html
-
-@docs htmlAttribute
+@docs htmlAttribute, htmlAttributes, batch, none
 
 
 # Primitives
@@ -117,7 +112,7 @@ import Html.Shared as Shared exposing (Element)
 import Json.Encode as Json exposing (Value)
 
 
-{-| Applies an `Html.Attribute` to an [Element](Html.Pipeline#Element).
+{-| Adds an `Html.Attribute` to an [Element](Html.Element#Element).
 
 This is the base function used to implement all other functions in this module.
 
@@ -125,6 +120,41 @@ This is the base function used to implement all other functions in this module.
 htmlAttribute : Html.Attribute msg -> Element msg -> Element msg
 htmlAttribute =
     Shared.addAttribute
+
+
+{-| -}
+htmlAttributes : List (Html.Attribute msg) -> Element msg -> Element msg
+htmlAttributes attrs =
+    batch (List.map htmlAttribute attrs)
+
+
+{-| Flattens a list of functions into a single function.
+
+    textStyles =
+        Attribute.batch
+            [ Attribute.style "font-family" "Monaco, sans-serif"
+            , Attribute.style "font-size" "1rem"
+            , Attribute.style "line-height" "1.4rem"
+            ]
+
+    paragraph =
+        Element.p
+            |> textStyles
+
+-}
+batch : List (Element msg -> Element msg) -> (Element msg -> Element msg)
+batch attributes el =
+    List.foldl (<|) el attributes
+
+
+{-| An empty attribute.
+
+It adds the attribute `Html.Attributes.class ""`.
+
+-}
+none : Element msg -> Element msg
+none el =
+    class "" el
 
 
 {-| Specify a style.

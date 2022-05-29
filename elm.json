@@ -1,14 +1,14 @@
 {
     "type": "package",
     "name": "mauroc8/elm-html-pipeline",
-    "summary": "Create HTML nodes with a pipeline",
+    "summary": "Build HTML nodes using the pipeline operator",
     "license": "BSD-3-Clause",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "exposed-modules": {
         "HTML": [
-            "Html.Pipeline",
-            "Html.Pipeline.Attribute",
-            "Html.Pipeline.Event"
+            "Html.Element",
+            "Html.Element.Attribute",
+            "Html.Element.Event"
         ]
     },
     "elm-version": "0.19.0 <= v < 0.20.0",

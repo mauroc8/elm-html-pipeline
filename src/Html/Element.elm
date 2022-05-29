@@ -1,5 +1,7 @@
-module Html.Pipeline exposing
-    ( Element, element, text, children, child, htmlChildren, map, collect, toHtml
+module Html.Element exposing
+    ( Element, element
+    , toHtml
+    , text, children, child, htmlChildren, htmlChild, map
     , style
     , h1, h2, h3, h4, h5, h6
     , div, p, hr, pre, blockquote
@@ -19,12 +21,35 @@ module Html.Pipeline exposing
     , details, summary, menuitem, menu
     )
 
-{-|
+{-| Some [Html](https://package.elm-lang.org/packages/elm/html/latest/Html#Html) nodes
+are [text nodes](https://developer.mozilla.org/en-US/docs/Web/API/Text) and others are
+[element nodes](https://developer.mozilla.org/en-US/docs/Web/API/Element).
+
+The type [Element](Element) represents only **element nodes**.
+Unlike `Html`, all `Element` values have a list of attributes and a list of children.
+
+This module has functions to create and modify `Element` nodes.
+
+**Note:** The code examples will assume the following imports:
+
+    import Html.Element as Element exposing (Element)
+    import Html.Element.Attribute as Attribute
+    import Html.Element.Event as Event
 
 
-# Primitives
+# Element
 
-@docs Element, element, text, children, child, htmlChildren, map, collect, toHtml
+@docs Element, element
+
+
+## Convert to HTML
+
+@docs toHtml
+
+
+## Add attributes and children
+
+@docs text, children, child, htmlChildren, htmlChild, map
 
 
 # Tags
@@ -125,11 +150,16 @@ import Html.Shared as Shared
 
 
 
--- CORE TYPES
+-- ELEMENT
 
 
-{-| A pipeline `Element` is a [HTML element node]
-that can be modified with pipeline functions.
+{-| An [HTML element node](https://developer.mozilla.org/en-US/docs/Web/HTML/Element).
+
+It has a tag name, a list of attributes and a list of children.
+
+`Element` nodes can be converted to [Html](https://package.elm-lang.org/packages/elm/html/latest/Html#Html)
+nodes using [toHtml](#toHtml).
+
 -}
 type alias Element msg =
     Shared.Element msg
@@ -139,16 +169,14 @@ type alias Modifier msg =
     Shared.Modifier msg
 
 
+{-| Creates an empty `Element` from an HTML tag name.
 
--- PRIMITIVES
-
-
-{-| General way to create `Element` values.
-It is used to define all of the helper functions in this library.
 
     button : Element msg
     button =
         element "button"
+
+    -- <button></button>
 
 -}
 element : String -> Element msg
@@ -163,9 +191,10 @@ element tagName =
 {-| Appends a text node to an element.
 
     Element.div
-        |> Element.text "Hello, world"
+        |> Element.text "Hello"
+        |> Element.text " world"
 
-    -- <div>Hello, world</div>
+    -- <div>Hello world</div>
 
 -}
 text : String -> Element msg -> Element msg
@@ -179,10 +208,10 @@ text content =
         |> Element.children
             [ Element.input
             , Element.button
-                |> Element.text "Submit"
+                |> Element.text "Ok"
             ]
 
-    -- <div><input /><button>Submit</button></div>
+    -- <div><input /><button>Ok</button></div>
 
 You can keep calling this function to add more children.
 
@@ -199,9 +228,7 @@ The example above can be written like:
     Element.div
         |> Element.child Element.input
         |> Element.child
-            (Element.button
-                |> Element.text "Submit"
-            )
+            (Element.button |> Element.text "Ok")
 
 -}
 child : Element msg -> Element msg -> Element msg
@@ -209,11 +236,18 @@ child el =
     children [ el ]
 
 
-{-| Appends `Html` values as children of an element.
+{-| Appends `Html` children to an element.
 -}
 htmlChildren : List (Html.Html msg) -> Element msg -> Element msg
 htmlChildren =
     Shared.addHtmlChildren
+
+
+{-| Appends an `Html` child to an element.
+-}
+htmlChild : Html.Html msg -> Element msg -> Element msg
+htmlChild child_ =
+    htmlChildren [ child_ ]
 
 
 {-| Transform the messages produced by some `Element`. In the following example,
@@ -242,28 +276,6 @@ into `Msg` values in `view`.
 map : (a -> msg) -> Element a -> Element msg
 map =
     Shared.map
-
-
-{-| Sometimes you **do** want to store attributes in a list.
-
-This helper function will let you apply multiple operations
-on an element:
-
-    buttonStyles label =
-        [ Attribute.style "background" "black"
-        , Attribute.style "color" "white"
-        , Attribute.style "padding" "10px"
-        , Element.text label
-        ]
-
-    button msg label =
-        Element.button
-            |> Element.collect (buttonStyles label)
-
--}
-collect : List (Element msg -> Element msg) -> Element msg -> Element msg
-collect transformations el =
-    List.foldl (<|) el transformations
 
 
 

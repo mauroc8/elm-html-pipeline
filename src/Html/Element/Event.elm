@@ -1,4 +1,4 @@
-module Html.Pipeline.Event exposing
+module Html.Element.Event exposing
     ( onClick, onDoubleClick
     , onMouseDown, onMouseUp
     , onMouseEnter, onMouseLeave

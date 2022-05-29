@@ -6,56 +6,65 @@ operator.
 ## Example
 
 ```elm
-import Html.Pipeline as Html
-import Html.Pipeline.Attribute as Attribute
-import Html.Pipeline.Event as Event
+import Html exposing (Html)
+import Html.Element as Element exposing (Element)
+import Html.Element.Attribute as Attribute
+import Html.Element.Event as Event
 
-view : Int -> Html.Element Msg
+view : Int -> Html Msg
 view count =
-  Html.div
-    |> Html.children
-        [ Html.button
-            |> Event.onClick Decrement
-            |> Html.text "-"
-        , Html.div
-            |> Html.text (String.fromInt count)
-        , Html.button
-            |> Event.onClick Increment
-            |> Html.text "+"
-        ]
+    Element.div
+        |> Attribute.style "font-family" "sans-serif"
+        |> Element.children
+            [ Element.button
+                |> Event.onClick Decrement
+                |> Element.text "-"
+            , Element.div
+                |> Element.text (String.fromInt count)
+            , Element.button
+                |> Event.onClick Increment
+                |> Element.text "+"
+            ]
+        |> Element.toHtml
 ```
 
 ## Motivation
 
-Feeling a little frustrated with all the list juggling involved in writing HTML in elm,
-I've been recently obsessed with trying a pipeline-based API instead.
+I wanted to try a pipeline-based API to generate HTML.
+This package offers the type [Element msg](Html.Element#Element) to create HTML
+nodes using pipelines.
 
-This is experimental, but I'm publishing it because, even if it turns out to be a bad idea,
-at least the next person that wants to scratch the same itch will realize sooner.
+_This is experimental, but I'm publishing it because, even if it turns out to be a bad idea,
+hopefully the next person that wants to scratch the same itch won't waste a lot of time with it._
 
-This package offers the type `Html.Pipeline.Element msg` to generate HTML.
 
 ## Usage
 
-You start a pipeling with a function from `Html.Pipeline`:
-
-> The same functions available in `Html` for creating `Html` nodes are available
-> in `Html.Pipeline` to create empty `Element`s.
+You start a pipeline with some function from [Html.Element](Html.Element):
 
 ```elm
+import Html.Element as Element exposing (Element)
+
 button : Element msg
 button =
     Element.button
 ```
 
+This creates an empty `<button></button>` element.
 
-Then you can add attributes, properties, event handlers and children:
+Then you can add attributes, event handlers and children:
 
 ```elm
+import Html.Element as Element exposing (Element)
+import Html.Element.Attribute as Attribute
+import Html.Element.Event as Event
+
 button : msg -> String -> Element msg
 button msg label =
     Element.button
+        |> Attribute.class "button"
         |> Event.onClick msg
+        |> Element.child icon
         |> Element.text label
 ```
 
@@ -67,22 +76,91 @@ primaryButton msg label =
     button msg label
         |> Attribute.class "primary-button"
 
-secondaryButton msg label =
-    button msg label
-        |> Attribute.class "secondary-buton"
+primaryButtonWithOutline msg label =
+    primaryButton msg label
+        |> Attribute.class "button-outline"
 ```
 
-You can convert an `Element msg` to `Html msg` using `Html.Pipeline.toHtml`.
+You can convert an `Element` into an `Html` using [toHtml](Html.Element#toHtml).
 
-Unlike an `Html msg`, an `Element msg` cannot be a text node, but
-you can append text nodes to any element using `Html.Pipeline.text`.
+You can't convert an `Html` into an `Element`, but you can append `Html` nodes as children of an
+`Element` using [htmlChildren](Html.Element#htmlChildren).
 
-You can also append `Html msg` nodes in an `Element` using `Html.Pipeline.htmlChildren`.
+## Elements vs nodes
+
+There are several types of [HTML nodes](https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType):
+
+- text nodes
+- element nodes (e.g. `<p>`, `<div>`)
+- comments
+- whitespace
+- others…
+
+The [Html](https://package.elm-lang.org/packages/elm/html/latest/Html#Html)
+type represents a text or element node. The [Element](Html.Element#Element) type represents
+only element nodes (that's why it's called like that).
+
+You can't create text nodes using this package, but you can append them to any `Element`
+using [text](Html.Element#text).
 
 ## Attributes and events
 
-Most functions in the `Html.Pipeline.Attribute` and `Html.Pipeline.Event` call the
-homonymous function in `Html.Attributes` and `Html.Events`
+I copy-pasted the [Html.Html](https://package.elm-lang.org/packages/elm/html/latest/Html),
+[Html.Attributes](https://package.elm-lang.org/packages/elm/html/latest/Html-Attributes)
+and [Html.Events](https://package.elm-lang.org/packages/elm/html/latest/Html-Events) modules and
+added a thin wrapper around the exposed functions. You can expect to encounter all the functions
+you're used to from `elm/html`.
+
+This library doesn't have an `Attribute` type, it uses
+[Html.Attribute](https://package.elm-lang.org/packages/elm/html/latest/Html#Attribute) under
+the hood.
+
+## Attributes
+
+Attributes in [Html.Element.Attribute](Html.Element.Attribute) are defined as functions
+that take an element and return a new element with the added attribute(s).
+
+```
+Attribute.style "color" "red"
+-- <function> : Element msg -> Element msg
+```
+
+At the type level, there's no distintion between attributes, event handlers and other
+functions like [children](Html.Element.children).
+
+### Batch attributes
+
+A list of attributes is just a list of functions `Element msg -> Element msg`, and can be
+flattened into a single `Element msg -> Element msg` function:
+
+```
+textStyles =
+    Attribute.batch
+        [ Attribute.style "font-family" "Monaco, sans-serif"
+        , Attribute.style "font-size" "1rem"
+        , Attribute.style "line-height" "1.4rem"
+        ]
+
+paragraph =
+    Element.p
+        |> textStyles
+
+```
+
+Note that adding child nodes is also done with a function of type `Element msg -> Element msg`,
+so there is no way (yet?) to prevent someone from doing things like:
+
+```
+textStyles =
+    Attribute.batch
+        [ Attribute.style "font-family" "Monaco, sans-serif"
+        , Attribute.style "font-size" "1rem"
+        , Attribute.style "line-height" "1.4rem"
+        , Element.text "Hello"
+        , Debug.log "attribute"
+        ]
+```
+
 
 ## Keyed and lazy
 
