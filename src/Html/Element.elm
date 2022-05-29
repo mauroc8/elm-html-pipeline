@@ -1,7 +1,8 @@
 module Html.Element exposing
     ( Element, element
     , toHtml
-    , text, children, child, htmlChildren, htmlChild, map
+    , text, children, child, htmlChildren, htmlChild
+    , map
     , style
     , h1, h2, h3, h4, h5, h6
     , div, p, hr, pre, blockquote
@@ -30,6 +31,9 @@ Unlike `Html`, all `Element` values have a list of attributes and a list of chil
 
 This module has functions to create and modify `Element` nodes.
 
+Most functions in this module are wrappers around the homonymous functions
+in [Html](https://package.elm-lang.org/packages/elm/html/latest/Html).
+
 **Note:** The code examples will assume the following imports:
 
     import Html.Element as Element exposing (Element)
@@ -47,15 +51,20 @@ This module has functions to create and modify `Element` nodes.
 @docs toHtml
 
 
-## Add attributes and children
+## Add children
 
-@docs text, children, child, htmlChildren, htmlChild, map
+@docs text, children, child, htmlChildren, htmlChild
+
+
+## Map
+
+@docs map
 
 
 # Tags
 
 
-## Stylesheets
+## Stylesheet
 
 @docs style
 
@@ -293,7 +302,7 @@ toHtml =
 -- SECTIONS
 
 
-{-| Creates a CSS style node.
+{-| Define CSS styles for the document.
 -}
 style : Element msg
 style =

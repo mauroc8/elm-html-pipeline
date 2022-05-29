@@ -8,7 +8,8 @@ module Html.Element.Event exposing
     , on, stopPropagationOn, preventDefaultOn, custom
     )
 
-{-|
+{-| This module has wrappers around the functions in
+[Html.Events](https://package.elm-lang.org/packages/elm/html/latest/Html-Events).
 
 
 # Mouse

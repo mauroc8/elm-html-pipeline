@@ -24,7 +24,6 @@ view count =
                 |> Event.onClick Increment
                 |> Element.text "+"
             ]
-        |> Element.toHtml
 ```
 
 ## Motivation
@@ -110,11 +109,11 @@ and [Html.Events](https://package.elm-lang.org/packages/elm/html/latest/Html-Eve
 added a thin wrapper around the exposed functions. You can expect to encounter all the functions
 you're used to from `elm/html`.
 
+## Attributes
+
 This library doesn't have an `Attribute` type, it uses
 [Html.Attribute](https://package.elm-lang.org/packages/elm/html/latest/Html#Attribute) under
 the hood.
-
-## Attributes
 
 Attributes in [Html.Element.Attribute](Html.Element.Attribute) are defined as functions
 that take an element and return a new element with the added attribute(s).
@@ -145,21 +144,6 @@ paragraph =
         |> textStyles
 
 ```
-
-Note that adding child nodes is also done with a function of type `Element msg -> Element msg`,
-so there is no way (yet?) to prevent someone from doing things like:
-
-```
-textStyles =
-    Attribute.batch
-        [ Attribute.style "font-family" "Monaco, sans-serif"
-        , Attribute.style "font-size" "1rem"
-        , Attribute.style "line-height" "1.4rem"
-        , Element.text "Hello"
-        , Debug.log "attribute"
-        ]
-```
-
 
 ## Keyed and lazy
 

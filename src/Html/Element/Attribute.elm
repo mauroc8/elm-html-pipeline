@@ -20,9 +20,21 @@ module Html.Element.Attribute exposing
     , cite, datetime, pubdate, manifest
     )
 
-{-| Functions to add attributes to an element.
+{-| This module exposes functions to add attributes to an `Element`.
+
+**Note:** The code examples will assume the following imports:
+
+    import Html.Element as Element exposing (Element)
+    import Html.Element.Attribute as Attribute
+    import Html.Element.Event as Event
+
+
+# Helpers
 
 @docs htmlAttribute, htmlAttributes, batch, none
+
+The rest of the functions in this module are wrappers around the homonymous functions
+in [Html.Attributes](https://package.elm-lang.org/packages/elm/html/latest/Html-Attributes).
 
 
 # Primitives
@@ -141,6 +153,15 @@ htmlAttributes attrs =
         Element.p
             |> textStyles
 
+Note that adding child nodes is also done with functions of type `Element msg -> Element msg`,
+so there is no way _(yet?)_ to prevent someone from doing:
+
+    textStyles =
+        Attribute.batch
+            [ Element.text "Hello"
+            , Debug.log "attribute"
+            ]
+
 -}
 batch : List (Element msg -> Element msg) -> (Element msg -> Element msg)
 batch attributes el =
@@ -150,6 +171,9 @@ batch attributes el =
 {-| An empty attribute.
 
 It adds the attribute `Html.Attributes.class ""`.
+
+> _You can also use the [identity]() function as a empty attribute, but this implementation
+> might work better with the virtual DOM diffing algorithm (unverified)._
 
 -}
 none : Element msg -> Element msg

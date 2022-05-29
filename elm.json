@@ -3,7 +3,7 @@
     "name": "mauroc8/elm-html-pipeline",
     "summary": "Build HTML nodes using the pipeline operator",
     "license": "BSD-3-Clause",
-    "version": "2.0.1",
+    "version": "2.0.2",
     "exposed-modules": {
         "HTML": [
             "Html.Element",
