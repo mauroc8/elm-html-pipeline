@@ -28,7 +28,6 @@ element tagName =
 
 type Modifier msg
     = AddAttribute (Html.Attribute msg)
-    | AddChildren (List (Element msg))
     | AddHtmlChildren (List (Html.Html msg))
 
 
@@ -48,9 +47,6 @@ mapModifier f modifier =
         AddAttribute attr ->
             AddAttribute (Html.Attributes.map f attr)
 
-        AddChildren children ->
-            AddChildren <| List.map (map f) children
-
         AddHtmlChildren children ->
             AddHtmlChildren <| List.map (Html.map f) children
 
@@ -62,7 +58,7 @@ addAttribute attr el =
 
 addChildren : List (Element msg) -> Element msg -> Element msg
 addChildren children el =
-    addModifier (AddChildren children) el
+    addHtmlChildren (List.map toHtml children) el
 
 
 addHtmlChildren : List (Html.Html msg) -> Element msg -> Element msg
@@ -94,10 +90,7 @@ collectAttributesAndChildren =
                 AddAttribute attr ->
                     ( attr :: attrs, children )
 
-                AddChildren otherChildren ->
-                    ( attrs, List.map toHtml otherChildren ++ children )
-
                 AddHtmlChildren otherChildren ->
-                    ( attrs, otherChildren ++ children )
+                    ( attrs, List.reverse otherChildren ++ children )
         )
         ( [], [] )
