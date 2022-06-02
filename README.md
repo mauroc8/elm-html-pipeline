@@ -10,7 +10,7 @@ import Html.Element as Element exposing (Element)
 import Html.Element.Attribute as Attribute
 import Html.Element.Event as Event
 
-view : Int -> Element Msg
+view : Int -> Element a Msg
 view count =
     Element.div
         |> Attribute.style "font-family" "sans-serif"
@@ -29,7 +29,7 @@ view count =
 ## Motivation
 
 I wanted to try a pipeline-based API to generate HTML.
-This package offers the type [Element msg](Html.Element#Element) to create HTML
+This package offers the type [Element a msg](Html.Element#Element) to create HTML
 nodes using pipelines.
 
 _This is experimental, but I'm publishing it because, even if it turns out to be a bad idea,
@@ -43,7 +43,7 @@ You start a pipeline with some function from [Html.Element](Html.Element):
 ```elm
 import Html.Element as Element exposing (Element)
 
-button : Element msg
+button : Element a msg
 button =
     Element.button
 ```
@@ -57,7 +57,7 @@ import Html.Element as Element exposing (Element)
 import Html.Element.Attribute as Attribute
 import Html.Element.Event as Event
 
-button : msg -> String -> Element msg
+button : msg -> String -> Element a msg
 button msg label =
     Element.button
         |> Attribute.class "button"
@@ -84,69 +84,9 @@ You can convert an `Element` into an `Html` using [toHtml](Html.Element#toHtml).
 You can't convert an `Html` into an `Element`, but you can append `Html` nodes as children of an
 `Element` using [htmlChildren](Html.Element#htmlChildren).
 
-## Elements vs nodes
-
-There are several types of [HTML nodes](https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType):
-
-- text nodes
-- element nodes (e.g. `<p>`, `<div>`)
-- comments
-- whitespace
-- others…
-
-The [Html](https://package.elm-lang.org/packages/elm/html/latest/Html#Html)
-type represents a text or element node. The [Element](Html.Element#Element) type represents
-only element nodes (that's why it's called like that).
-
-You can't create text nodes using this package, but you can append them to any `Element`
-using [text](Html.Element#text).
-
-## Attributes and events
-
-I copy-pasted the [Html.Html](https://package.elm-lang.org/packages/elm/html/latest/Html),
-[Html.Attributes](https://package.elm-lang.org/packages/elm/html/latest/Html-Attributes)
-and [Html.Events](https://package.elm-lang.org/packages/elm/html/latest/Html-Events) modules and
-added a thin wrapper around the exposed functions. You can expect to encounter all the functions
-you're used to from `elm/html`.
 
 ## Attributes
 
 This library doesn't have an `Attribute` type, it uses
-[Html.Attribute](https://package.elm-lang.org/packages/elm/html/latest/Html#Attribute) under
-the hood.
-
-Attributes in [Html.Element.Attribute](Html.Element.Attribute) are defined as functions
-that take an element and return a new element with the added attribute(s).
-
-```
-Attribute.style "color" "red"
--- <function> : Element msg -> Element msg
-```
-
-At the type level, there's no distintion between attributes, event handlers and other
-functions like [children](Html.Element.children).
-
-### Batch attributes
-
-A list of attributes is just a list of functions `Element msg -> Element msg`, and can be
-flattened into a single `Element msg -> Element msg` function:
-
-```
-textStyles =
-    Attribute.batch
-        [ Attribute.style "font-family" "Monaco, sans-serif"
-        , Attribute.style "font-size" "1rem"
-        , Attribute.style "line-height" "1.4rem"
-        ]
-
-paragraph =
-    Element.p
-        |> textStyles
-
-```
-
-## Keyed and lazy
-
-There are no plans to support keyed and lazy nodes.
-
-You can just use the regular `Html.Keyed` and `Html.Lazy` functions.
+[Html.Attribute](https://package.elm-lang.org/packages/elm/html/latest/Html#Attribute)
+under the hood.

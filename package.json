@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "@parcel/transformer-elm": "2.6.0",
+    "elm-doc-preview": "^5.0.5"
+  }
+}
