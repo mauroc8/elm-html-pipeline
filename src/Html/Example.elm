@@ -1,6 +1,5 @@
 module Html.Example exposing (..)
 
-import Browser
 import Html
 import Html.Attributes
 import Html.Builder
