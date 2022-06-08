@@ -6,87 +6,55 @@ operator.
 ## Example
 
 ```elm
-import Html.Element as Element exposing (Element)
-import Html.Element.Attribute as Attribute
-import Html.Element.Event as Event
+import Html
+import Html.Attributes
+import Html.Pipeline
 
-view : Int -> Element a Msg
-view count =
-    Element.div
-        |> Attribute.style "font-family" "sans-serif"
-        |> Element.children
-            [ Element.button
-                |> Event.onClick Decrement
-                |> Element.text "-"
-            , Element.div
-                |> Element.text (String.fromInt count)
-            , Element.button
-                |> Event.onClick Increment
-                |> Element.text "+"
+associatedLabelAndInput :
+    { id : String }
+    ->
+        ( Html.Pipeline.Element msg
+        , Html.Pipeline.Element msg
+        )
+associatedLabelAndInput { id } =
+    ( Html.Pipeline.node "label"
+        |> Html.Pipeline.addAttributes
+            [ Html.Attributes.for id
             ]
+    , Html.Pipeline.node "input"
+        |> Html.Pipeline.addAttributes
+            [ Html.Attributes.id id
+            ]
+    )
+
+inputWithLabel { id, value, type_, onChange } =
+    let
+        ( label, input ) =
+            associatedLabelAndInput { id = id }
+    in
+    Html.div []
+        [ label
+            |> Html.Pipeline.addChildren
+                [ Html.text "Password"
+                ]
+            |> Html.Pipeline.toHtml
+        , input
+            |> Html.Pipeline.addAttributes
+                [ Html.Attributes.type_ type_
+                , Html.Attributes.value value
+                , Html.Events.onInput onChange
+                ]
+            |> Html.Pipeline.toHtml
+        ]
 ```
 
 ## Motivation
 
-I wanted to try a pipeline-based API to generate HTML.
-This package offers the type [Element a msg](Html.Element#Element) to create HTML
-nodes using pipelines.
+This package doesn't solve any problem that you can't solve with [elm/html](https://package.elm-lang.org/packages/elm/html/latest/),
+but it provides an alternative API.
 
-_This is experimental, but I'm publishing it because, even if it turns out to be a bad idea,
-hopefully the next person that wants to scratch the same itch won't waste a lot of time with it._
+If you find yourself doing a lot of `::`, `++` or `List.concat` in a view, using this package might make the
+code easier to read and mantain.
 
-
-## Usage
-
-You start a pipeline with some function from [Html.Element](Html.Element):
-
-```elm
-import Html.Element as Element exposing (Element)
-
-button : Element a msg
-button =
-    Element.button
-```
-
-This creates an empty `<button></button>` element.
-
-Then you can add attributes, event handlers and children:
-
-```elm
-import Html.Element as Element exposing (Element)
-import Html.Element.Attribute as Attribute
-import Html.Element.Event as Event
-
-button : msg -> String -> Element a msg
-button msg label =
-    Element.button
-        |> Attribute.class "button"
-        |> Event.onClick msg
-        |> Element.child icon
-        |> Element.text label
-```
-
-`Html` values are constructed once and then untouchable.
-Instead, `Element`s can be modified after being created:
-
-```elm
-primaryButton msg label =
-    button msg label
-        |> Attribute.class "primary-button"
-
-primaryButtonWithOutline msg label =
-    primaryButton msg label
-        |> Attribute.class "button-outline"
-```
-
-You can convert an `Element` into an `Html` using [toHtml](Html.Element#toHtml).
-
-You can't convert an `Html` into an `Element`, but you can append `Html` nodes as children of an
-`Element` using [htmlChildren](Html.Element#htmlChildren).
-
-
-## Attributes
-
-This library doesn't have an `Attribute` type, it uses
-[Html.Attribute](https://package.elm-lang.org/packages/elm/html/latest/Html#Attribute)
-under the hood.
+This package is not a replacement for [elm/html](https://package.elm-lang.org/packages/elm/html/latest/),
+though.
